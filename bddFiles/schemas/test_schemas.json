@@ -1,0 +1,30 @@
+{
+  "joueur": {
+    "nom": {
+      "type": "string",
+      "required": true
+    },
+    "prenom": {
+      "type": "string",
+      "required": false
+    },
+    "id": {
+      "type": "number",
+      "required": true
+    }
+  },
+  "equipe": {
+    "designation": {
+      "type": "string",
+      "required": true
+    },
+    "ville": {
+      "type": "string",
+      "required": false
+    },
+    "id": {
+      "type": "number",
+      "required": true
+    }
+  }
+}
