@@ -1,3 +1,3 @@
 # projetWebService
 
-Maxime, Salavudeen, Rémi KARMANN
+Maxime Huertas, Salavudeen Hadji, Rémi KARMANN
