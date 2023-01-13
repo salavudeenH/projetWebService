@@ -1,8 +1,17 @@
 {
-  "joueur": {
+  "joueur": [{
     "nom": "karmann",
     "prenom": "remi",
     "id": 1
   },
+  {
+    "nom": "test",
+    "prenom": "testPrenom",
+    "id": 4
+  },
+  {
+    "nom": "test",
+    "id": 6
+  }],
   "equipe": {}
 }

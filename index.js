@@ -40,7 +40,16 @@ const requestHandler = (req, res) => {
       if (req.url.split("?")[1]) {
         var tablePath = path.substring(path.indexOf("/") + 1);
         tablePath = tablePath.split("?")[0];
-        var params = req.url.split("?");
+        var params = req.url.split("?")[1];
+        if(params){
+          params = params.split("&");
+          var result = {}
+          for(var i = 0; i < params.length; i++){
+            var separation = params[i].split("=")
+            result[separation[0]] = separation[1]
+          }
+        }
+        params = result
       } else {
         var tablePath = path.substring(path.indexOf("/") + 1);
       }
@@ -54,22 +63,58 @@ const requestHandler = (req, res) => {
         res.writeHead(200, { "Content-type": "application/json" });
         res.end(JSON.stringify(listBDD));
       } else {
-        res.writeHead(200, { "Content-type": "application/json" });
         if (checkVariableExist(BddPath, "_datas") === false) {
+          res.writeHead(500, { "Content-type": "application/json" });
           res.end('{message : "This Database does not exist !"}');
         } else {
           if (!tablePath) {
+            res.writeHead(200, { "Content-type": "application/json" });
             res.end(JSON.stringify(eval(BddPath + "_schemas")));
           } else {
             if (tablePath.includes("/")) {
               res.writeHead(404, { "Content-type": "ext/plain" });
               res.end("Not Found");
             } else if (!eval(BddPath + "_datas")[tablePath]) {
+              res.writeHead(500, { "Content-type": "application/json" });
               res.end('{message : "This table does not exist in this bdd !"}');
             } else {
               if (params) {
-                console.log(params);
+                var objet = ""
+                if(params["id"]){
+                  eval(BddPath + "_datas")[tablePath].map(function(e) {
+                    if(params["id"] == e.id) {
+                        objet = e;
+                    }
+                  });
+                  if(objet){
+                    res.writeHead(200, { "Content-type": "application/json" });
+                    res.end(JSON.stringify(objet));
+                  }else{
+                    res.writeHead(500, { "Content-type": "application/json" });
+                    res.end('{message : "No '+ tablePath +' with this id found !"}');
+                  }
+                }else{
+                  var keys = Object.keys(params)
+                  var listObjects = []
+                  for(var i=0; i < keys.length; i++){
+                    eval(BddPath + "_datas")[tablePath].map(function(e) {
+                      if(params[keys[i]] == e[keys[i]]) {
+                        if(!listObjects.includes(e)){
+                          listObjects.push(e);
+                        }
+                      }else {
+                        if(listObjects.includes(e)){
+                          var index = listObjects.indexOf(e)
+                          listObjects.splice(index, 1)
+                        }
+                      }
+                    });
+                  }
+                  res.writeHead(200, { "Content-type": "application/json" });
+                  res.end(JSON.stringify(listObjects));
+                }
               } else {
+                res.writeHead(200, { "Content-type": "application/json" });
                 res.end(JSON.stringify(eval(BddPath + "_datas")[tablePath]));
               }
             }
@@ -128,6 +173,7 @@ const requestHandler = (req, res) => {
               );
             } else {
               var schema = eval(BddPath + "_schemas")[tablePath];
+              var datas = eval(BddPath + "_datas")[tablePath];
               var keys = [];
               for (var k in schema) {
                 if (k != "id") {
@@ -142,12 +188,37 @@ const requestHandler = (req, res) => {
 
               req.on("end", function () {
                 body = JSON.parse(body);
-                var error = [];
+                var errors = [];
+                var objet = {}
                 for (var i = 0; i < keys.length; i++) {
-                  var required = schema[keys[i]].required;
-                  var type = schema[keys[i]].type;
-                  var value = body[keys[i]];
-                  console.log(required, type, value);
+                    var required = schema[keys[i]].required;
+                    var type = schema[keys[i]].type;
+                    var value = body[keys[i]];
+                    if(!value){
+                        if(required == true){
+                            errors.push('Le champ ' + keys[i] + ' ne peut pas être vide !');
+                        }
+                    }else{
+                        if(typeof value != type){
+                            errors.push('Le champ ' + keys[i] + ' doit être au format ' + type + ' !')
+                        }else{
+                            objet[keys[i]] = value
+                        }
+                    }
+                }
+                if(errors.length == 0){
+                    var maxId = 0;
+                    datas.map(function(e) {
+                        if(e.id > maxId) {
+                            maxId = e.id;
+                        }
+                    })
+                    objet["id"] = maxId + 1;
+                    console.log("avant : ", eval(BddPath + '_datas'))
+                    eval(BddPath + '_datas')[tablePath].push(objet);
+                    console.log("apres : ", eval(BddPath + '_datas'));
+                }else{
+                    res.end(JSON.stringify(errors));
                 }
               });
             }
@@ -176,7 +247,7 @@ const requestHandler = (req, res) => {
           req.on("end", function () {
             schemasFile[tablePath] = JSON.parse(body);
             schemasFile[tablePath]["id"] = { type: "number", required: true };
-            datasFile[tablePath] = {};
+            datasFile[tablePath] = [];
 
             fs.writeFileSync(
               "./bddFiles/schemas/" + BddPath + "_schemas.json",
@@ -205,28 +276,33 @@ const requestHandler = (req, res) => {
     // Partie permettant de gérer les requêtes de type DELETE
     else if (req.method == "DELETE") {
       // Partie permettant de supprimer une bdd
-      if (!tablePath) {
-        delete eval(BddPath + "_schemas");
-        delete eval(BddPath + "_datas");
-        fs.unlinkSync("./bddFiles/schemas/" + BddPath + "_schemas.json");
-        fs.unlinkSync("./bddFiles/datas/" + BddPath + "_datas.json");
-        var index = listBDD["bdd"].indexOf(BddPath);
-        listBDD["bdd"].splice(index, 1);
-        fs.writeFileSync(
-          "./bddFiles/index.json",
-          JSON.stringify(listBDD, null, 2)
-        );
-        res.end(
-          `{message : "Database ` + BddPath + ` is correctly deleted !"}`
-        );
-      } else {
-        // Partie permettant de supprimer une table
-        if (!params) {
-          var schemasFile = eval(BddPath + "_schemas");
-          var datasFile = eval(BddPath + "_datas");
-          delete schemasFile[tablePath];
-          delete datasFile[tablePath];
+      if(checkVariableExist(BddPath, "_schemas") == false){
+        res.writeHead(500, { "Content-type": "application/json" });
+        res.end('{message : "The Database' + BddPath + 'does not exist !"}');
+      }else{
+        if (!tablePath) {
+          delete eval(BddPath + "_schemas");
+          delete eval(BddPath + "_datas");
+          fs.unlinkSync("./bddFiles/schemas/" + BddPath + "_schemas.json");
+          fs.unlinkSync("./bddFiles/datas/" + BddPath + "_datas.json");
+          var index = listBDD["bdd"].indexOf(BddPath);
+          listBDD["bdd"].splice(index, 1);
+          fs.writeFileSync(
+            "./bddFiles/index.json",
+            JSON.stringify(listBDD, null, 2)
+          );
+          res.end(
+            `{message : "Database ` + BddPath + ` is correctly deleted !"}`
+          );
         } else {
+          // Partie permettant de supprimer une table
+          if (!params) {
+            var schemasFile = eval(BddPath + "_schemas");
+            var datasFile = eval(BddPath + "_datas");
+            delete schemasFile[tablePath];
+            delete datasFile[tablePath];
+          } else {
+          }
         }
       }
     }
