@@ -296,12 +296,45 @@ const requestHandler = (req, res) => {
           );
         } else {
           // Partie permettant de supprimer une table
-          if (!params) {
-            var schemasFile = eval(BddPath + "_schemas");
-            var datasFile = eval(BddPath + "_datas");
-            delete schemasFile[tablePath];
-            delete datasFile[tablePath];
-          } else {
+          if(tablePath.includes("/")){
+            res.writeHead(404, { "Content-type": "application/json" });
+            res.end('{message : "Not found"}');
+          }else{
+            if (!params) {
+              if(eval(BddPath+"_datas")[tablePath]){
+                var schemasFile = eval(BddPath + "_schemas");
+                var datasFile = eval(BddPath + "_datas");
+                delete schemasFile[tablePath];
+                delete datasFile[tablePath];
+                //       sauvegarde a faire dans les fichiers 
+              }else{
+                res.writeHead(500, { "Content-type": "application/json" });
+                res.end('{message : "The table '+ tablePath +' does not exist in the database '+ BddPath +'!"}');
+              }
+            } else {
+              if (params["id"]) {
+                var success = false;
+                eval(BddPath + "_datas")[tablePath].map(function(e) {
+                  if(params["id"] == e.id) {
+                      console.log("avant : ", eval(BddPath+'_datas')[tablePath])
+                      var index = eval(BddPath+'_datas')[tablePath].indexOf(e);
+                      eval(BddPath+'_datas')[tablePath].splice(index, 1);
+                      console.log("Apres : ", eval(BddPath+'_datas')[tablePath])
+                      success = true;
+                  }
+                });
+                if(!success){
+                  res.writeHead(500, { "Content-type": "application/json" });
+                  res.end('{message : "The id informed does not match any of the '+ tablePath +' !"}');
+                }else{
+                  res.writeHead(200, { "Content-type": "application/json" });
+                  res.end(JSON.stringify(eval(BddPath+'_datas')[tablePath]));
+                }
+              } else {
+                res.writeHead(500, { "Content-type": "application/json" });
+                res.end('{message : "An id of a '+ tablePath +' is required !"}');
+              }
+            }
           }
         }
       }
