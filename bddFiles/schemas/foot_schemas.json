@@ -1,1 +1,20 @@
-{}
+{
+  "joueur": {
+    "teamName": {
+      "type": "string",
+      "required": true
+    },
+    "goals": {
+      "type": "string",
+      "required": true
+    },
+    "shirtNumber": {
+      "type": "string",
+      "required": true
+    },
+    "id": {
+      "type": "number",
+      "required": true
+    }
+  }
+}

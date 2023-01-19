@@ -1,9 +1,3 @@
 {
-  "bdd": [
-    "foot",
-    "test",
-    "ess",
-    "new",
-    "joueur"
-  ]
+  "bdd": ["foot"]
 }
