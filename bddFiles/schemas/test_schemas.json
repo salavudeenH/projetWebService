@@ -26,5 +26,19 @@
       "type": "number",
       "required": true
     }
+  },
+  "test": {
+    "dataTableauToSend": [
+      {
+        "er": {
+          "type": "string",
+          "required": true
+        }
+      }
+    ],
+    "id": {
+      "type": "number",
+      "required": true
+    }
   }
 }

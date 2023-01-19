@@ -28,6 +28,7 @@ function checkVariableExist(BddPath, type) {
 
 const requestHandler = (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "*");
   var path = req.url.split("?")[0];
   if (!path || path == "/") {
     res.writeHead(200, { "Content-type": "application/json" });
@@ -338,6 +339,11 @@ const requestHandler = (req, res) => {
           }
         }
       }
+    } 
+    // Partie permettant de gérer les requêtes de type OPTIONS
+    else if (req.method == "OPTIONS") {
+      res.writeHead(200);
+      res.end()
     }
     // Partie permettant de gérer les requêtes dont le type n'est pas géré par notre serveur
     else {
