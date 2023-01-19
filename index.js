@@ -15,6 +15,23 @@ for (let i = 0; i < listBDD["bdd"].length; i++) {
   eval("var " + listBDD["bdd"][i] + "_datas = " + bddContentDatas + ";");
 }
 
+// async function save () {
+//   for (let i = 0; i < listBDD["bdd"].length; i++) {
+//     var schemasPath = "./bddFiles/schemas/" + listBDD["bdd"][i] + "_schemas.json";
+//     var datasPath = "./bddFiles/datas/" + listBDD["bdd"][i] + "_datas.json";
+//     fs.writeFileSync(
+//       schemasPath,
+//       JSON.stringify(eval(listBDD["bdd"][i] + "_schemas"), null, 2)
+//     );
+//     fs.writeFileSync(
+//       datasPath,
+//       JSON.stringify(eval(listBDD["bdd"][i] + "_datas"), null, 2)
+//     );
+//   }
+// }
+
+// setInterval(function() { save(); }, 300000);
+
 function checkVariableExist(BddPath, type) {
   try {
     let check = eval(BddPath + type);
@@ -29,6 +46,7 @@ function checkVariableExist(BddPath, type) {
 const requestHandler = (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "*");
+  res.setHeader('Cache-Control', 'no-cache');
   var path = req.url.split("?")[0];
   if (!path || path == "/") {
     res.writeHead(200, { "Content-type": "application/json" });
