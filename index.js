@@ -15,22 +15,30 @@ for (let i = 0; i < listBDD["bdd"].length; i++) {
   eval("var " + listBDD["bdd"][i] + "_datas = " + bddContentDatas + ";");
 }
 
-// async function save () {
-//   for (let i = 0; i < listBDD["bdd"].length; i++) {
-//     var schemasPath = "./bddFiles/schemas/" + listBDD["bdd"][i] + "_schemas.json";
-//     var datasPath = "./bddFiles/datas/" + listBDD["bdd"][i] + "_datas.json";
-//     fs.writeFileSync(
-//       schemasPath,
-//       JSON.stringify(eval(listBDD["bdd"][i] + "_schemas"), null, 2)
-//     );
-//     fs.writeFileSync(
-//       datasPath,
-//       JSON.stringify(eval(listBDD["bdd"][i] + "_datas"), null, 2)
-//     );
-//   }
-// }
+var change = false;
+async function save () {
+  if(change){
+    fs.writeFileSync(
+      "./bddFiles/index.json",
+      JSON.stringify(listBDD, null, 2)
+    );
+    for (let i = 0; i < listBDD["bdd"].length; i++) {
+      var schemasPath = "./bddFiles/schemas/" + listBDD["bdd"][i] + "_schemas.json";
+      var datasPath = "./bddFiles/datas/" + listBDD["bdd"][i] + "_datas.json";
+      fs.writeFileSync(
+        schemasPath,
+        JSON.stringify(eval(listBDD["bdd"][i] + "_schemas"), null, 2)
+      );
+      fs.writeFileSync(
+        datasPath,
+        JSON.stringify(eval(listBDD["bdd"][i] + "_datas"), null, 2)
+      );
+    }
+    change = false;
+  }
+}
 
-// setInterval(function() { save(); }, 300000);
+setInterval(function() { save(); }, 300000);
 
 function checkVariableExist(BddPath, type) {
   try {
@@ -148,26 +156,9 @@ const requestHandler = (req, res) => {
           // Création d'une nouvelle base de données
 
           listBDD["bdd"].push(BddPath);
-
-          fs.writeFileSync(
-            "./bddFiles/index.json",
-            JSON.stringify(listBDD, null, 2)
-          );
-          fs.writeFileSync("./bddFiles/datas/" + BddPath + "_datas.json", "{}");
-          fs.writeFileSync(
-            "./bddFiles/schemas/" + BddPath + "_schemas.json",
-            "{}"
-          );
-
-          var bddContentSchemas = fs.readFileSync(
-            "./bddFiles/schemas/" + BddPath + "_schemas.json"
-          );
-          var bddContentDatas = fs.readFileSync(
-            "./bddFiles/datas/" + BddPath + "_datas.json"
-          );
-          eval("var " + BddPath + "_schemas = " + bddContentSchemas + ";");
-          eval("var " + BddPath + "_datas = " + bddContentDatas + ";");
-
+          eval("globalThis." + BddPath + "_schemas = {};");
+          eval("globalThis." + BddPath + "_datas = {};");
+          change = true;
           res.end(
             `{message : "Database ` + BddPath + ` is correctly created !"}`
           );
@@ -180,6 +171,7 @@ const requestHandler = (req, res) => {
           var lastPart = tablePath.substring(tablePath.indexOf("/") + 1);
           tablePath = tablePath.substring(0, tablePath.indexOf("/"));
           if (lastPart == "create") {
+            // Création d'un objet dans la table
             if (checkVariableExist(BddPath, "_datas") === false) {
               res.end(
                 `{message : "Database ` + BddPath + ` does not exist !"}`
@@ -226,18 +218,20 @@ const requestHandler = (req, res) => {
                     }
                 }
                 if(errors.length == 0){
-                    var maxId = 0;
-                    datas.map(function(e) {
-                        if(e.id > maxId) {
-                            maxId = e.id;
-                        }
-                    })
-                    objet["id"] = maxId + 1;
-                    console.log("avant : ", eval(BddPath + '_datas'))
-                    eval(BddPath + '_datas')[tablePath].push(objet);
-                    console.log("apres : ", eval(BddPath + '_datas'));
+                  var maxId = 0;
+                  datas.map(function(e) {
+                      if(e.id > maxId) {
+                          maxId = e.id;
+                      }
+                  })
+                  objet["id"] = maxId + 1;
+                  eval(BddPath + '_datas')[tablePath].push(objet);
+                  change = true;
+                  res.writeHead(200, { "Content-type": "application/json" });
+                  res.end(JSON.stringify(eval(BddPath + '_datas')));
                 }else{
-                    res.end(JSON.stringify(errors));
+                  res.writeHead(500, { "Content-type": "application/json" });
+                  res.end(JSON.stringify(errors));
                 }
               });
             }
@@ -256,6 +250,7 @@ const requestHandler = (req, res) => {
               ` !"}`
           );
         } else {
+          // Création d'une table
           var schemasFile = eval(BddPath + "_schemas");
           var datasFile = eval(BddPath + "_datas");
           var body = "";
@@ -268,14 +263,7 @@ const requestHandler = (req, res) => {
             schemasFile[tablePath]["id"] = { type: "number", required: true };
             datasFile[tablePath] = [];
 
-            fs.writeFileSync(
-              "./bddFiles/schemas/" + BddPath + "_schemas.json",
-              JSON.stringify(schemasFile, null, 2)
-            );
-            fs.writeFileSync(
-              "./bddFiles/datas/" + BddPath + "_datas.json",
-              JSON.stringify(datasFile, null, 2)
-            );
+            change = true;
 
             res.end(
               `{message : "Table ` + tablePath + ` correctly created !"}`
@@ -306,10 +294,7 @@ const requestHandler = (req, res) => {
           fs.unlinkSync("./bddFiles/datas/" + BddPath + "_datas.json");
           var index = listBDD["bdd"].indexOf(BddPath);
           listBDD["bdd"].splice(index, 1);
-          fs.writeFileSync(
-            "./bddFiles/index.json",
-            JSON.stringify(listBDD, null, 2)
-          );
+          change = true;
           res.end(
             `{message : "Database ` + BddPath + ` is correctly deleted !"}`
           );
@@ -325,7 +310,7 @@ const requestHandler = (req, res) => {
                 var datasFile = eval(BddPath + "_datas");
                 delete schemasFile[tablePath];
                 delete datasFile[tablePath];
-                //       sauvegarde a faire dans les fichiers 
+                change = true;
               }else{
                 res.writeHead(500, { "Content-type": "application/json" });
                 res.end('{message : "The table '+ tablePath +' does not exist in the database '+ BddPath +'!"}');
@@ -335,10 +320,8 @@ const requestHandler = (req, res) => {
                 var success = false;
                 eval(BddPath + "_datas")[tablePath].map(function(e) {
                   if(params["id"] == e.id) {
-                      console.log("avant : ", eval(BddPath+'_datas')[tablePath])
                       var index = eval(BddPath+'_datas')[tablePath].indexOf(e);
                       eval(BddPath+'_datas')[tablePath].splice(index, 1);
-                      console.log("Apres : ", eval(BddPath+'_datas')[tablePath])
                       success = true;
                   }
                 });
@@ -346,6 +329,7 @@ const requestHandler = (req, res) => {
                   res.writeHead(500, { "Content-type": "application/json" });
                   res.end('{message : "The id informed does not match any of the '+ tablePath +' !"}');
                 }else{
+                  change = true;
                   res.writeHead(200, { "Content-type": "application/json" });
                   res.end(JSON.stringify(eval(BddPath+'_datas')[tablePath]));
                 }
