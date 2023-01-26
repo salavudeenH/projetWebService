@@ -353,6 +353,9 @@ const requestHandler = (req, res) => {
               delete schemasFile[tablePath];
               delete datasFile[tablePath];
               change = true;
+
+              res.writeHead(200, { "Content-type": "application/json" });
+              res.end('{message : "The table '+ tablePath +' was correctly deleted !"}');
             }else{
               res.writeHead(500, { "Content-type": "application/json" });
               res.end('{message : "The table '+ tablePath +' does not exist in the database '+ BddPath +'!"}');
