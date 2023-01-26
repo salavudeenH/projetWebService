@@ -256,15 +256,21 @@ const requestHandler = (req, res) => {
         });
 
         req.on("end", function () {
-          schemasFile[tablePath] = JSON.parse(body);
-          schemasFile[tablePath]["id"] = { type: "number", required: true };
-          datasFile[tablePath] = [];
+          if(body){
+            schemasFile[tablePath] = JSON.parse(body);
+            schemasFile[tablePath]["id"] = { type: "number", required: true };
+            datasFile[tablePath] = [];
+            change = true;
 
-          change = true;
-
-          res.end(
-            `{message : "Table ` + tablePath + ` correctly created !"}`
-          );
+            res.writeHead(200, { "Content-type": "application/json" });
+            res.end(
+              `{message : "Table ` + tablePath + ` correctly created !"}`
+            );
+          }else{
+            res.writeHead(500, { "Content-type": "application/json" });
+            res.end('{message : "The body of the request can\'t be null !"}');
+          }
+          
         });
       }
     }
