@@ -271,55 +271,70 @@ const requestHandler = (req, res) => {
   }
   // Partie permettant de gérer les requêtes de type PUT
   else if (req.method == "PUT") {
-    if (!tablePath || !params["id"]) {
+    if (!tablePath) {
       res.writeHead(404, { "Content-type": "ext/plain" });
       res.end("Not Found");
+    } else if(!params["id"]) {
+      res.writeHead(500, { "Content-type": "application/json" });
+      res.end('{message : "An id of a '+ tablePath +' is required !"}');
     } else {
-      var schema = eval(BddPath + "_schemas")[tablePath];
-      var datas = eval(BddPath + "_datas")[tablePath];
-      var keys = [];
-      for (var k in schema) {
-        keys.push(k);
-      }
-      var body = "";
-      req.on("data", function (data) {
-        body += data.toString();
+      var idParams = params["id"];
+      var verifObject = false
+      eval(BddPath + '_datas')[tablePath].map(function(e) {
+        if(idParams == e.id) {
+          verifObject = true;
+        }
       });
+      if(verifObject) {
+        var schema = eval(BddPath + "_schemas")[tablePath];
+        var datas = eval(BddPath + "_datas")[tablePath];
+        var keys = [];
+        for (var k in schema) {
+          keys.push(k);
+        }
+        var body = "";
+        req.on("data", function (data) {
+          body += data.toString();
+        });
 
-      req.on("end", function () {
-        body = JSON.parse(body);
-        var errors = [];
-        var objet = {};
-        for (var i = 0; i < keys.length; i++) {
-          var required = schema[keys[i]].required;
-          var type = schema[keys[i]].type;
-          var value = body[keys[i]];
-          if(!value){
-              if(required == true){
-                  errors.push('Le champ ' + keys[i] + ' ne peut pas être vide !');
-              }
-          }else{
-              if(typeof value != type){
-                  errors.push('Le champ ' + keys[i] + ' doit être au format ' + type + ' !')
-              }else{
-                  objet[keys[i]] = value
-              }
-          }
-        }
-        if(errors.length == 0){
-          eval(BddPath + '_datas')[tablePath].map(function(e, index) {
-            if(params["id"] == e.id) {
-              eval(BddPath + '_datas')[tablePath][index] = objet;
+        req.on("end", function () {
+          body = JSON.parse(body);
+          var errors = [];
+          var objet = {};
+          for (var i = 0; i < keys.length; i++) {
+            var required = schema[keys[i]].required;
+            var type = schema[keys[i]].type;
+            var value = body[keys[i]];
+            if(!value){
+                if(required == true){
+                    errors.push('Le champ ' + keys[i] + ' ne peut pas être vide !');
+                }
+            }else{
+                if(typeof value != type){
+                    errors.push('Le champ ' + keys[i] + ' doit être au format ' + type + ' !')
+                }else{
+                    objet[keys[i]] = value
+                }
             }
-          });
-          change = true;
-          res.writeHead(200, { "Content-type": "application/json" });
-          res.end(JSON.stringify(eval(BddPath + '_datas')));
-        }else{
-          res.writeHead(500, { "Content-type": "application/json" });
-          res.end(JSON.stringify(errors));
-        }
-      });
+          }
+          if(errors.length == 0){
+            eval(BddPath + '_datas')[tablePath].map(function(e, index) {
+              if(params["id"] == e.id) {
+                eval(BddPath + '_datas')[tablePath][index] = objet;
+              }
+            });
+            change = true;
+            res.writeHead(200, { "Content-type": "application/json" });
+            res.end(JSON.stringify(eval(BddPath + '_datas')));
+          }else{
+            res.writeHead(500, { "Content-type": "application/json" });
+            res.end(JSON.stringify(errors));
+          }
+        });
+      } else {
+        res.writeHead(500, { "Content-type": "application/json" });
+        res.end('{message : "No object '+ tablePath +' find with this id !"}');
+      }
     }
   }
   // Partie permettant de gérer les requêtes de type DELETE
