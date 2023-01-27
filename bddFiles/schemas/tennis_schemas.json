@@ -1,0 +1,20 @@
+{
+  "players": {
+    "trophy": {
+      "type": "string",
+      "required": true
+    },
+    "win": {
+      "type": "number",
+      "required": false
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "id": {
+      "type": "number",
+      "required": true
+    }
+  }
+}

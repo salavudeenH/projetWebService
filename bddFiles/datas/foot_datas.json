@@ -1,22 +1,54 @@
 {
   "joueur": [
     {
-      "teamName": "madrid",
-      "goals": "6",
-      "shirtNumber": "16",
+      "teamName": "messi",
+      "goals": "50",
+      "shirtNumber": "10",
       "id": 1
     },
     {
-      "teamName": "barca",
-      "goals": "64",
-      "shirtNumber": "28",
+      "teamName": "iniesta",
+      "goals": "20",
+      "shirtNumber": "8",
       "id": 2
     },
     {
-      "teamName": "madrid",
-      "goals": "15",
-      "shirtNumber": "2",
+      "teamName": "ronaldo",
+      "goals": "0",
+      "shirtNumber": "7",
       "id": 3
+    },
+    {
+      "teamName": "xavi",
+      "goals": "20",
+      "shirtNumber": "6",
+      "id": 4
+    }
+  ],
+  "team": [
+    {
+      "name": "barcelone",
+      "classement": 1,
+      "country": "spain",
+      "id": 1
+    },
+    {
+      "name": "real madrid",
+      "classement": 2,
+      "country": "spain",
+      "id": 2
+    },
+    {
+      "name": "liverpool",
+      "classement": 2,
+      "country": "england",
+      "id": 3
+    },
+    {
+      "name": "manchester city",
+      "classement": 1,
+      "country": "england",
+      "id": 4
     }
   ]
 }

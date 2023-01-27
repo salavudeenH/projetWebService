@@ -16,5 +16,23 @@
       "type": "number",
       "required": true
     }
+  },
+  "team": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "classement": {
+      "type": "number",
+      "required": true
+    },
+    "country": {
+      "type": "string",
+      "required": true
+    },
+    "id": {
+      "type": "number",
+      "required": true
+    }
   }
 }

@@ -37,7 +37,7 @@ async function save () {
     change = false;
   }
 }
-setInterval(function() { save(); }, 300000);
+setInterval(function() { save(); }, 60000);
 
 function checkVariableExist(BddPath, type) {
   try {
